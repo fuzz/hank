@@ -45,7 +45,6 @@ class SymlinkManagerTest < Minitest::Test
     assert_equal target_full_path, File.readlink(source_path)
   end
 
-
   def test_install_all
     # Add some mappings
     @hankfile.add_mapping(File.join(@base_dir, 'file1'), 'target1')

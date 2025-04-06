@@ -44,7 +44,7 @@ module Hank
           )
         else
           # Source path is a symlink, check if it points to the correct target
-          actual_target = Pathname.new(File.readlink(source))
+          actual_target = Pathname.new(File.readlink(source.to_s))
 
           if actual_target != target && actual_target.expand_path != target.expand_path
             issues << Issue.new(

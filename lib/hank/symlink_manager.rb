@@ -82,7 +82,6 @@ module Hank
         puts "⚠️ Failed to create symlink: #{source} -> #{target}: #{e.message}".red
         false
       end
-
     end
 
     sig { params(source_path: String).void }

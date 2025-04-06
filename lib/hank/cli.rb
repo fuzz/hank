@@ -6,6 +6,7 @@ module Hank
     extend T::Sig
 
     desc '', 'Verify or create symlinks based on Hankfile'
+    sig { void }
     def index
       hankfile_path = Pathname.new(Dir.pwd).join('Hankfile')
 
@@ -18,6 +19,7 @@ module Hank
     default_task :index
 
     desc 'edit', 'Edit Hankfile using GUI file browser'
+    sig { returns(NilClass) }
     def edit
       hankfile_path = Pathname.new(Dir.pwd).join('Hankfile')
 
@@ -40,6 +42,7 @@ module Hank
 
     map '--version' => :version
     desc '--version', 'Display version information'
+    sig { returns(NilClass) }
     def version
       puts "Hank version #{Hank::VERSION}"
     end
@@ -96,8 +99,9 @@ module Hank
           puts "#{source_path} is a directory, skipping.".yellow
         else
           puts "#{source_path} is a regular file, not a symlink:".red
-          if File.file?(source_path) && File.file?(target_path.expand_path(symlink_manager.base_dir))
-            diff = Diffy::Diff.new(source_path, target_path.expand_path(symlink_manager.base_dir),
+          target_path_full = symlink_manager.base_dir.join(target_path).to_s
+          if File.file?(source_path) && File.file?(target_path_full)
+            diff = Diffy::Diff.new(source_path, target_path_full,
                                    source: 'files').to_s(:color)
             puts diff
           end
@@ -108,7 +112,7 @@ module Hank
           choice = gets.chomp
 
           if choice == '1'
-            symlink_manager.create_symlink(source_path, target_path, backup: true)
+            symlink_manager.create_symlink(source_path, target_path, force: true)
           elsif choice == '2'
             symlink_manager.remove_mapping(source_path)
           else
@@ -118,7 +122,7 @@ module Hank
       end
     end
 
-    sig { params(hankfile_path: Pathname).void }
+    sig { params(_hankfile_path: Pathname).void }
     def create_new_hankfile(_hankfile_path)
       puts 'No Hankfile found in current directory.'
       print 'Would you like to create one? (y/n): '

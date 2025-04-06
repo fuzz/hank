@@ -174,16 +174,16 @@ module Hank
           if file == '..'
             @current_path = @current_path.parent
             load_files
-          elsif file.end_with?('/')
-            @current_path = @current_path.join(file.chomp('/'))
+          elsif T.must(file).end_with?('/')
+            @current_path = @current_path.join(T.must(file).chomp('/'))
             load_files
           end
         when ' ' # Space key for selection
           file = @file_list[@current_index]
           next if file == '..' # Skip parent directory
 
-          if file.end_with?('/') # Directory
-            path = File.join(@current_path, file.chomp('/')).to_s
+          if T.must(file).end_with?('/') # Directory
+            path = File.join(@current_path, T.must(file).chomp('/')).to_s
             if @selected_files.include?(path)
               @selected_files.delete(path)
             else

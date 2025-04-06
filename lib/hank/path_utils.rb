@@ -39,7 +39,7 @@ module Hank
       rescue StandardError => e
         puts "Warning: Error detecting file type: #{e.message}".yellow
         # Fall back to simple text check
-        File.open(path) { |f| f.read(1024).valid_encoding? }
+        File.open(path) { |f| T.must(f.read(1024)).valid_encoding? }
       end
     end
   end
