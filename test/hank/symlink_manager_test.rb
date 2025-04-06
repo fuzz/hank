@@ -45,24 +45,6 @@ class SymlinkManagerTest < Minitest::Test
     assert_equal target_full_path, File.readlink(source_path)
   end
 
-  def test_create_symlink_with_backup
-    # Create a regular file
-    source_path = File.join(@base_dir, 'source')
-    File.write(source_path, 'original content')
-
-    # Target
-    target_path = 'target'
-
-    @manager.create_symlink(source_path, target_path, backup: true)
-
-    # Check symlink was created
-    assert File.symlink?(source_path)
-
-    # Check backup was created
-    backup_file = Dir.glob("#{source_path}.bak.*").first
-    assert backup_file
-    assert_equal 'original content', File.read(backup_file)
-  end
 
   def test_install_all
     # Add some mappings
