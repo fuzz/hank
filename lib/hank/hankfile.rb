@@ -27,41 +27,41 @@ module Hank
     def update_mappings(selected_files)
       # Keep mappings for selected files, add new ones
       new_mappings = {}
-      
+
       selected_files.each do |source_path|
-        if @mappings.key?(source_path)
-          new_mappings[source_path] = @mappings[source_path]
-        else
-          new_mappings[source_path] = PathUtils.flatten_path(source_path)
-        end
+        new_mappings[source_path] = if @mappings.key?(source_path)
+                                      @mappings[source_path]
+                                    else
+                                      PathUtils.flatten_path(source_path)
+                                    end
       end
-      
+
       @mappings = new_mappings
       save
     end
 
     sig { void }
     def save
-      File.write("Hankfile", to_s)
+      File.write('Hankfile', to_s)
     end
 
     sig { returns(String) }
     def to_s
-      TomlRB.dump({'mappings' => @mappings})
+      TomlRB.dump({ 'mappings' => @mappings })
     end
 
     sig { params(file_path: Pathname).returns(Hankfile) }
     def self.from_file(file_path)
       content = File.read(file_path)
       data = TomlRB.parse(content)
-      
+
       hankfile = Hankfile.new
       if data['mappings'].is_a?(Hash)
         data['mappings'].each do |source_path, target_path|
           hankfile.add_mapping(source_path, target_path.to_s)
         end
       end
-      
+
       hankfile
     end
   end

@@ -28,49 +28,70 @@ module Hank
         target_path: String,
         force: T::Boolean,
         backup: T::Boolean
-      ).void
+      ).returns(T::Boolean)
     end
     def create_symlink(source_path, target_path, force: false, backup: false)
       source = Pathname.new(source_path)
       target = @base_dir.join(target_path)
-      
+      did_backup = false
+
       # Ensure the source path directory exists
       FileUtils.mkdir_p(source.dirname) unless source.dirname.directory?
-      
-      # Ensure the target file exists
+
+      # Ensure the target exists
       unless target.exist?
-        # If source exists and is a regular file, copy it to target
-        if source.exist? && !source.symlink? && source.file?
-          FileUtils.cp(source, target)
+        if source.exist?
+          if source.directory?
+            # If source is a directory, move the entire directory
+            FileUtils.mv(source, target)
+          elsif !source.symlink? && source.file?
+            # If source is a regular file, move it
+            FileUtils.mv(source, target)
+          else
+            # Create empty file or directory as needed
+            source.directory? ? FileUtils.mkdir_p(target) : FileUtils.touch(target)
+          end
+        elsif source_path.end_with?('/')
+          # Create empty file or directory based on the source path name
+          # (If we can infer it's supposed to be a directory)
+          FileUtils.mkdir_p(target)
         else
-          # Otherwise create an empty file as the target
           FileUtils.touch(target)
         end
       end
-      
+
       # Handle existing destination
       if source.exist?
         if source.symlink?
-          if force
-            # Remove existing symlink if force is specified
-            FileUtils.rm(source)
-          else
-            return # Skip if symlink already exists and force is not specified
-          end
+          return false unless force
+
+          # Remove existing symlink if force is specified
+          FileUtils.rm_rf(source)
+
+        # Skip if symlink already exists and force is not specified
+
         elsif backup
-          # Backup existing file
+          # Backup existing file or directory
           backup_path = "#{source_path}.bak.#{Time.now.to_i}"
-          FileUtils.cp(source, backup_path)
-          FileUtils.rm(source)
+          if source.directory?
+            FileUtils.cp_r(source, backup_path)
+          else
+            FileUtils.cp(source, backup_path)
+          end
+          FileUtils.rm_rf(source)
           puts "Created backup of #{source_path} at #{backup_path}".green
+          did_backup = true
         else
-          return # Skip if file exists and backup is not specified
+          FileUtils.rm_rf(source)
         end
       end
-      
+
       # Create the symlink
       FileUtils.ln_s(target.to_s, source.to_s)
       puts "Created symlink: #{source} -> #{target}".green
+
+      # Return true if backup was created, or if backup was requested
+      backup ? true : did_backup
     end
 
     sig { params(source_path: String).void }

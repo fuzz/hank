@@ -1,16 +1,16 @@
 # frozen_string_literal: true
 # typed: false
 
-$LOAD_PATH.unshift File.expand_path("../lib", __dir__)
-require "hank"
+$LOAD_PATH.unshift File.expand_path('../lib', __dir__)
+require 'hank'
 
-require "minitest/autorun"
-require "minitest/reporters"
-require "simplecov"
+require 'minitest/autorun'
+require 'minitest/reporters'
+require 'simplecov'
 
 # Configure SimpleCov
 SimpleCov.start do
-  add_filter "/test/"
+  add_filter '/test/'
 end
 
 # Configure Minitest reporters

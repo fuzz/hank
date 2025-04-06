@@ -21,11 +21,11 @@ module Hank
     sig { returns(T::Array[Issue]) }
     def validate
       issues = []
-      
+
       @hankfile.mappings.each do |source_path, target_path|
         source = Pathname.new(source_path)
         target = @base_dir.join(target_path)
-        
+
         if !source.exist?
           # Source path doesn't exist
           issues << Issue.new(
@@ -45,7 +45,7 @@ module Hank
         else
           # Source path is a symlink, check if it points to the correct target
           actual_target = Pathname.new(File.readlink(source))
-          
+
           if actual_target != target && actual_target.expand_path != target.expand_path
             issues << Issue.new(
               type: :wrong_target,
@@ -56,7 +56,7 @@ module Hank
           end
         end
       end
-      
+
       issues
     end
   end

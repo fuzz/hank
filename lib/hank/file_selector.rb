@@ -1,234 +1,208 @@
 # frozen_string_literal: true
 # typed: strict
 
+require 'curses'
+
 module Hank
   class FileSelector
     extend T::Sig
-    include Glimmer::LibUI::Application
-    
+
     sig { params(initial_files: T.nilable(T::Array[String])).void }
     def initialize(initial_files = nil)
       @initial_files = T.let(initial_files || [], T::Array[String])
-      @selected_files = T.let([], T::Array[String])
+      @selected_files = T.let(@initial_files.dup, T::Array[String])
       @current_path = T.let(Pathname.new('/'), Pathname)
-      @files = T.let([], T::Array[String])
-      @result = T.let(nil, T.nilable(T::Array[String]))
-      @file_list = T.let(nil, T.nilable(Glimmer::LibUI::CustomControl))
+      @file_list = T.let([], T::Array[String])
+      @current_index = T.let(0, Integer)
+      @offset = T.let(0, Integer)
     end
 
     sig { returns(T.nilable(T::Array[String])) }
     def run
-      setup_and_start_ui
-      @result
+      init_curses
+      begin
+        load_files
+        draw_screen
+        handle_input
+      ensure
+        close_curses
+      end
+
+      @selected_files.empty? ? nil : @selected_files
     end
 
     private
 
     sig { void }
-    def setup_and_start_ui
-      application(title: 'Hank File Selector') {
-        on_closing do
-          @result = @selected_files.empty? ? nil : @selected_files
-          true
-        end
+    def init_curses
+      Curses.init_screen
+      Curses.start_color
+      Curses.curs_set(0)  # Hide cursor
+      Curses.noecho       # Don't echo input
+      Curses.cbreak       # Immediate key input
+      Curses.stdscr.keypad(true) # Enable arrow keys
 
-        window('Hank File Selector', 800, 600) {
-          margined true
-          
-          vertical_box {
-            horizontal_box {
-              button('Up') {
-                on_clicked do
-                  navigate_up
-                end
-              }
-              
-              entry {
-                text @current_path.to_s
-                readonly true
-              }
-              
-              button('Refresh') {
-                on_clicked do
-                  refresh_files
-                end
-              }
-            }
-            
-            @file_list = table {
-              text_column('Name')
-              text_column('Type')
-              
-              cell_rows Array.new
-              
-              on_selection_changed do |table, selection_data|
-                if selection_data
-                  row = selection_data.row_at_index
-                  if row < @files.size
-                    path = File.join(@current_path, @files[row])
-                    if File.directory?(path)
-                      navigate_to(path)
-                    end
-                  end
-                end
-              end
-            }
-            
-            horizontal_box {
-              checkbox('Show Hidden Files') {
-                checked true
-                on_toggled do
-                  refresh_files
-                end
-              }
-            }
-            
-            horizontal_box {
-              button('Select') {
-                on_clicked do
-                  select_current_file
-                end
-              }
-              
-              button('Done') {
-                on_clicked do
-                  @result = @selected_files.empty? ? nil : @selected_files
-                  stop
-                end
-              }
-              
-              button('Cancel') {
-                on_clicked do
-                  @result = nil
-                  stop
-                end
-              }
-            }
-            
-            horizontal_box {
-              label('Selected Files:')
-            }
-            
-            area {
-              stretchy true
-              
-              vertical_box {
-                @selected_files.each do |file|
-                  horizontal_box {
-                    label(file)
-                    button('X') {
-                      on_clicked do
-                        @selected_files.delete(file)
-                        refresh_selection_display
-                      end
-                    }
-                  }
-                end
-              }
-            }
-          }
-        }
-        
-        # Initialize file list
-        refresh_files
-        
-        # Pre-select initial files
-        @selected_files = @initial_files.dup
-        refresh_selection_display
-      }.launch
+      # Define color pairs
+      Curses.init_pair(1, Curses::COLOR_WHITE, Curses::COLOR_BLUE)    # Header/footer
+      Curses.init_pair(2, Curses::COLOR_BLACK, Curses::COLOR_WHITE)   # Selected item
+      Curses.init_pair(3, Curses::COLOR_GREEN, Curses::COLOR_BLACK)   # Directory
+      Curses.init_pair(4, Curses::COLOR_WHITE, Curses::COLOR_BLACK)   # File
+      Curses.init_pair(5, Curses::COLOR_YELLOW, Curses::COLOR_BLACK)  # Selected file
     end
 
     sig { void }
-    def refresh_files
-      @files = []
-      
-      # Add directories first
-      Dir.entries(@current_path.to_s).sort.each do |entry|
-        next if entry == '.' || entry == '..'
-        
-        path = File.join(@current_path, entry)
-        
-        # Skip if not a directory
-        next unless File.directory?(path)
-        
-        @files << entry
-      end
-      
-      # Then add text files
-      Dir.entries(@current_path.to_s).sort.each do |entry|
-        next if entry == '.' || entry == '..'
-        
-        path = File.join(@current_path, entry)
-        
-        # Skip if not a file or is a symlink
-        next if File.directory?(path) || File.symlink?(path)
-        
-        # Skip if not a text file
-        next unless PathUtils.is_text_file?(path)
-        
-        @files << entry
-      end
-      
-      # Update table
-      update_file_list
+    def close_curses
+      Curses.close_screen
     end
 
     sig { void }
-    def update_file_list
-      rows = []
-      
-      @files.each do |file|
-        path = File.join(@current_path, file)
-        if File.directory?(path)
-          rows << [file, 'Directory']
+    def load_files
+      @file_list = []
+
+      # Add parent directory option
+      @file_list << '..'
+
+      # Add directories
+      dirs = Dir.entries(@current_path.to_s)
+                .select { |entry| File.directory?(File.join(@current_path, entry)) && entry != '.' && entry != '..' }
+                .sort
+                .map { |entry| "#{entry}/" }
+
+      @file_list.concat(dirs)
+
+      # Add text files
+      files = Dir.entries(@current_path.to_s)
+                 .select do |entry|
+        path = File.join(@current_path, entry)
+        File.file?(path) && !File.symlink?(path) && PathUtils.is_text_file?(path)
+      end
+               .sort
+
+      @file_list.concat(files)
+
+      # Reset current index if needed
+      @current_index = 0 if @current_index >= @file_list.length
+      @offset = 0 if @offset >= @file_list.length
+    end
+
+    sig { void }
+    def draw_screen
+      Curses.clear
+      height = Curses.lines
+      width = Curses.cols
+
+      # Draw header
+      Curses.attron(Curses.color_pair(1))
+      Curses.setpos(0, 0)
+      Curses.addstr(' ' * width)
+      Curses.setpos(0, 0)
+      Curses.addstr(" Hank File Selector - #{@current_path}")
+      Curses.attroff(Curses.color_pair(1))
+
+      # Draw file list
+      visible_items = height - 4 # Header, footer, and help line
+      @offset = @current_index - visible_items + 1 if @current_index >= @offset + visible_items
+      @offset = @current_index if @current_index < @offset
+
+      visible_files = @file_list[@offset, visible_items]
+      visible_files&.each_with_index do |file, idx|
+        row = idx + 1
+        real_idx = idx + @offset
+        is_selected = @current_index == real_idx
+        is_dir = file.end_with?('/')
+        is_chosen = @selected_files.include?(File.join(@current_path, file.chomp('/')).to_s)
+
+        # Select color based on file type and selection status
+        if is_selected
+          Curses.attron(Curses.color_pair(2))
+        elsif is_dir
+          Curses.attron(Curses.color_pair(3))
+        elsif is_chosen
+          Curses.attron(Curses.color_pair(5))
         else
-          rows << [file, 'File']
+          Curses.attron(Curses.color_pair(4))
+        end
+
+        Curses.setpos(row, 0)
+        Curses.addstr(' ' * width)
+        Curses.setpos(row, 0)
+        prefix = is_chosen ? '[*] ' : '[ ] '
+        Curses.addstr("#{prefix}#{file}")
+
+        # Reset attributes
+        if is_selected
+          Curses.attroff(Curses.color_pair(2))
+        elsif is_dir
+          Curses.attroff(Curses.color_pair(3))
+        elsif is_chosen
+          Curses.attroff(Curses.color_pair(5))
+        else
+          Curses.attroff(Curses.color_pair(4))
         end
       end
-      
-      @file_list.cell_rows = rows
+
+      # Draw help line
+      Curses.setpos(height - 2, 0)
+      Curses.addstr(' ' * width)
+      Curses.setpos(height - 2, 0)
+      Curses.addstr(' ↑/↓: Navigate | Space: Select | Enter: Open | q: Quit | d: Done')
+
+      # Draw footer with stats
+      Curses.attron(Curses.color_pair(1))
+      Curses.setpos(height - 1, 0)
+      Curses.addstr(' ' * width)
+      Curses.setpos(height - 1, 0)
+      Curses.addstr(" Selected: #{@selected_files.size} files")
+      Curses.attroff(Curses.color_pair(1))
+
+      Curses.refresh
     end
 
-    sig { void }
-    def navigate_up
-      @current_path = @current_path.parent
-      refresh_files
-    end
+    sig { returns(T.nilable(T::Array[String])) }
+    def handle_input
+      loop do
+        draw_screen
+        key = Curses.getch
 
-    sig { params(path: String).void }
-    def navigate_to(path)
-      @current_path = Pathname.new(path)
-      refresh_files
-    end
-
-    sig { void }
-    def select_current_file
-      selection = @file_list.selection_for_click_index
-      return if selection.nil?
-      
-      row = selection.row_at_index
-      if row < @files.size
-        file = @files[row]
-        path = File.join(@current_path, file)
-        
-        # Only select files, not directories
-        if File.file?(path) && !File.symlink?(path)
-          full_path = path.to_s
-          if @selected_files.include?(full_path)
-            @selected_files.delete(full_path)
-          else
-            @selected_files << full_path
+        case key
+        when Curses::KEY_UP
+          @current_index -= 1 if @current_index > 0
+        when Curses::KEY_DOWN
+          @current_index += 1 if @current_index < @file_list.length - 1
+        when Curses::KEY_ENTER, 10, 13 # Enter key
+          file = @file_list[@current_index]
+          if file == '..'
+            @current_path = @current_path.parent
+            load_files
+          elsif file.end_with?('/')
+            @current_path = @current_path.join(file.chomp('/'))
+            load_files
           end
-          refresh_selection_display
+        when ' ' # Space key for selection
+          file = @file_list[@current_index]
+          next if file == '..' # Skip parent directory
+
+          if file.end_with?('/') # Directory
+            path = File.join(@current_path, file.chomp('/')).to_s
+            if @selected_files.include?(path)
+              @selected_files.delete(path)
+            else
+              @selected_files << path
+            end
+          else # File
+            path = File.join(@current_path, file).to_s
+            if @selected_files.include?(path)
+              @selected_files.delete(path)
+            else
+              @selected_files << path
+            end
+          end
+        when 'q', 'Q'
+          return nil # Cancel
+        when 'd', 'D'
+          return @selected_files
         end
       end
-    end
-
-    sig { void }
-    def refresh_selection_display
-      # This would need to be implemented differently in a real UI
-      # For now, we'll just print to console
-      puts "Selected files: #{@selected_files.join(', ')}"
     end
   end
 end
