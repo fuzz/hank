@@ -60,17 +60,16 @@ module Hank
 
       # Handle existing destination
       if source.exist?
-        if source.symlink?
-          return false unless force
+        if source.symlink? && !force
+          return false
 
           # Remove existing symlink if force is specified
-          FileUtils.rm_rf(source)
 
-        # Skip if symlink already exists and force is not specified
+          # Skip if symlink already exists and force is not specified
 
-        else
-          FileUtils.rm_rf(source)
         end
+
+        FileUtils.rm_rf(source)
       end
 
       # Create the symlink

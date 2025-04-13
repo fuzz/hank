@@ -166,7 +166,7 @@ module Hank
 
         case key
         when Curses::KEY_UP
-          @current_index -= 1 if @current_index > 0
+          @current_index -= 1 if @current_index.positive?
         when Curses::KEY_DOWN
           @current_index += 1 if @current_index < @file_list.length - 1
         when Curses::KEY_ENTER, 10, 13 # Enter key
@@ -182,20 +182,15 @@ module Hank
           file = @file_list[@current_index]
           next if file == '..' # Skip parent directory
 
-          if T.must(file).end_with?('/') # Directory
-            path = File.join(@current_path, T.must(file).chomp('/')).to_s
-            if @selected_files.include?(path)
-              @selected_files.delete(path)
-            else
-              @selected_files << path
-            end
-          else # File
-            path = File.join(@current_path, file).to_s
-            if @selected_files.include?(path)
-              @selected_files.delete(path)
-            else
-              @selected_files << path
-            end
+          path = if T.must(file).end_with?('/') # Directory
+                   File.join(@current_path, T.must(file).chomp('/')).to_s
+                 else # File
+                   File.join(@current_path, file).to_s
+                 end
+          if @selected_files.include?(path)
+            @selected_files.delete(path)
+          else
+            @selected_files << path
           end
         when 'q', 'Q'
           return nil # Cancel
