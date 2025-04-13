@@ -2,9 +2,11 @@
 # typed: strict
 
 module Hank
+  # Validates the integrity of symlinks
   class Validator
     extend T::Sig
 
+    # Represents a validation issue with a symlink
     class Issue < T::Struct
       const :type, Symbol # :missing, :wrong_target, :not_symlink
       const :source_path, String

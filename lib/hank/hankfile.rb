@@ -2,6 +2,7 @@
 # typed: strict
 
 module Hank
+  # Manages the Hankfile configuration
   class Hankfile
     extend T::Sig
 

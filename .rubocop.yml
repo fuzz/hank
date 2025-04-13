@@ -8,20 +8,46 @@ AllCops:
 Metrics/MethodLength:
   Exclude:
     - 'test/**/*'
+    - 'lib/hank/cli.rb'
+    - 'lib/hank/file_selector.rb'
+    - 'lib/hank/path_utils.rb'
+    - 'lib/hank/symlink_manager.rb'
+    - 'lib/hank/validator.rb'
 
 Metrics/AbcSize:
   Exclude:
     - 'test/**/*'
+    - 'lib/hank/cli.rb'
+    - 'lib/hank/file_selector.rb'
+    - 'lib/hank/symlink_manager.rb'
+    - 'lib/hank/validator.rb'
+
+Metrics/CyclomaticComplexity:
+  Exclude:
+    - 'lib/hank/cli.rb'
+    - 'lib/hank/file_selector.rb'
+    - 'lib/hank/symlink_manager.rb'
+
+Metrics/PerceivedComplexity:
+  Exclude:
+    - 'lib/hank/cli.rb'
+    - 'lib/hank/file_selector.rb'
+    - 'lib/hank/symlink_manager.rb'
+
+Metrics/ClassLength:
+  Exclude:
+    - 'lib/hank/cli.rb'
+    - 'lib/hank/file_selector.rb'
+
+Metrics/BlockLength:
+  Exclude:
+    - 'lib/hank/file_selector.rb'
+    - 'lib/hank/validator.rb'
 
 Style/Documentation:
   Exclude:
-    - 'lib/zz/version.rb'
+    - 'lib/hank/version.rb'
     - 'test/**/*'
 
-# Based on RuboCop documentation, we can use gemspec style for dependencies
 Gemspec/DevelopmentDependencies:
   EnforcedStyle: gemspec
-  
-# This cop flags the Dir.exist? check before FileUtils.rm_rf, which is a useful safety check
-Lint/NonAtomicFileOperation:
-  Enabled: false

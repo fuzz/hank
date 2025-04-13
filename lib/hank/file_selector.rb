@@ -4,6 +4,7 @@
 require 'curses'
 
 module Hank
+  # Interactive curses-based file selection interface
   class FileSelector
     extend T::Sig
 
@@ -74,7 +75,7 @@ module Hank
       files = Dir.entries(@current_path.to_s)
                  .select do |entry|
         path = File.join(@current_path, entry)
-        File.file?(path) && !File.symlink?(path) && PathUtils.is_text_file?(path)
+        File.file?(path) && !File.symlink?(path) && PathUtils.text_file?(path)
       end
                .sort
 

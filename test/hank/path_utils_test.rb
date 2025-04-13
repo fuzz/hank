@@ -16,7 +16,7 @@ class PathUtilsTest < Minitest::Test
     assert_equal 'etc-nginx-conf.d-default.conf', Hank::PathUtils.flatten_path('/etc/nginx/conf.d/default.conf')
   end
 
-  def test_is_text_file
+  def test_text_file
     # Create a temporary text file
     text_file = Tempfile.new(['test', '.txt'])
     text_file.write('This is a test')
@@ -28,8 +28,8 @@ class PathUtilsTest < Minitest::Test
     binary_file.write("\x00\x01\x02\x03")
     binary_file.close
 
-    assert Hank::PathUtils.is_text_file?(text_file.path)
-    refute Hank::PathUtils.is_text_file?(binary_file.path)
+    assert Hank::PathUtils.text_file?(text_file.path)
+    refute Hank::PathUtils.text_file?(binary_file.path)
 
     text_file.unlink
     binary_file.unlink

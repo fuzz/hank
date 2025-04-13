@@ -2,6 +2,7 @@
 # typed: strict
 
 module Hank
+  # Utilities for path manipulation and file type detection
   class PathUtils
     extend T::Sig
 
@@ -23,7 +24,7 @@ module Hank
     end
 
     sig { params(path: String).returns(T::Boolean) }
-    def self.is_text_file?(path)
+    def self.text_file?(path)
       return false unless File.file?(path)
 
       # Use libmagic to determine if file is text

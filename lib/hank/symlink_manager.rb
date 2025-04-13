@@ -2,6 +2,7 @@
 # typed: strict
 
 module Hank
+  # Manages creation and removal of symlinks
   class SymlinkManager
     extend T::Sig
 
@@ -29,6 +30,16 @@ module Hank
         force: T::Boolean
       ).returns(T::Boolean)
     end
+    sig { params(source: Pathname, target: Pathname).void }
+    def create_empty_target(source, target)
+      if source.directory?
+        FileUtils.mkdir_p(target)
+      else
+        FileUtils.touch(target)
+      end
+    end
+
+    sig { params(source_path: String, target_path: String, force: T::Boolean).returns(T::Boolean) }
     def create_symlink(source_path, target_path, force: false)
       source = Pathname.new(source_path)
       target = @base_dir.join(target_path)
@@ -39,15 +50,12 @@ module Hank
       # Ensure the target exists
       unless target.exist?
         if source.exist?
-          if source.directory?
-            # If source is a directory, move the entire directory
-            FileUtils.mv(source, target)
-          elsif !source.symlink? && source.file?
-            # If source is a regular file, move it
+          if source.directory? || (!source.symlink? && source.file?)
+            # Move the entire directory or file to the target location
             FileUtils.mv(source, target)
           else
             # Create empty file or directory as needed
-            source.directory? ? FileUtils.mkdir_p(target) : FileUtils.touch(target)
+            create_empty_target(source, target)
           end
         elsif source_path.end_with?('/')
           # Create empty file or directory based on the source path name

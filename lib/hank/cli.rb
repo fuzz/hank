@@ -2,6 +2,7 @@
 # typed: strict
 
 module Hank
+  # Command line interface for Hank
   class CLI < Thor
     extend T::Sig
 
