@@ -2,3 +2,4 @@
 .
 --ignore=/tmp/
 --ignore=/vendor/bundle
+--ignore=sorbet/rbi/gems/thor@1.3.2.rbi

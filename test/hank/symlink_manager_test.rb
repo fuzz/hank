@@ -4,7 +4,10 @@
 require 'test_helper'
 
 class SymlinkManagerTest < Minitest::Test
+  include HankTestHelpers
+  
   def setup
+    setup_hankfile_test
     @hankfile = Hank::Hankfile.new
     @base_dir = Dir.mktmpdir('hank_test')
     @manager = Hank::SymlinkManager.new(@hankfile)
@@ -15,6 +18,7 @@ class SymlinkManagerTest < Minitest::Test
 
   def teardown
     FileUtils.remove_entry @base_dir
+    teardown_hankfile_test
   end
 
   def test_create_symlink
@@ -54,6 +58,9 @@ class SymlinkManagerTest < Minitest::Test
 
     assert File.symlink?(File.join(@base_dir, 'file1'))
     assert File.symlink?(File.join(@base_dir, 'file2'))
+    
+    assert File.exist?(temp_hankfile_path)
+    refute File.exist?('Hankfile'), "Hankfile should not be created in project root"
   end
 
   def test_remove_mapping
@@ -64,5 +71,8 @@ class SymlinkManagerTest < Minitest::Test
 
     assert_equal 1, @hankfile.mappings.size
     refute @hankfile.mappings.key?(File.join(@base_dir, 'file1'))
+    
+    assert File.exist?(temp_hankfile_path)
+    refute File.exist?('Hankfile'), "Hankfile should not be created in project root"
   end
 end

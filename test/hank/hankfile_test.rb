@@ -4,7 +4,10 @@
 require 'test_helper'
 
 class HankfileTest < Minitest::Test
+  include HankTestHelpers
+  
   def setup
+    setup_hankfile_test
     @hankfile = Hank::Hankfile.new
     @temp_file = Tempfile.new(['Hankfile', ''])
     @temp_file.close
@@ -12,6 +15,7 @@ class HankfileTest < Minitest::Test
 
   def teardown
     @temp_file.unlink
+    teardown_hankfile_test
   end
 
   def test_add_mapping
@@ -56,5 +60,21 @@ class HankfileTest < Minitest::Test
     assert_equal 'etc-hosts', @hankfile.mappings['/etc/hosts']
     assert_equal 'etc-passwd', @hankfile.mappings['/etc/passwd']
     refute @hankfile.mappings.key?('/etc/resolv.conf')
+    
+    # Check that the file was created in the temp directory
+    assert File.exist?(temp_hankfile_path)
+    refute File.exist?('Hankfile'), "Hankfile should not be created in project root"
+  end
+  
+  def test_save
+    @hankfile.add_mapping('/etc/hosts', 'etc-hosts')
+    @hankfile.save
+    
+    assert File.exist?(temp_hankfile_path)
+    refute File.exist?('Hankfile'), "Hankfile should not be created in project root"
+    
+    content = File.read(temp_hankfile_path)
+    assert_match(/\[mappings\]/, content)
+    assert_match(%r{/etc/hosts}, content)
   end
 end

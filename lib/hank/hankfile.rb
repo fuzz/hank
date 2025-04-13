@@ -42,7 +42,8 @@ module Hank
 
     sig { void }
     def save
-      File.write('Hankfile', to_s)
+      path = ENV['HANKFILE'] || 'Hankfile'
+      File.write(path, to_s)
     end
 
     sig { returns(String) }
