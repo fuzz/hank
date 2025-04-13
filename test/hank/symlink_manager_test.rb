@@ -59,8 +59,8 @@ class SymlinkManagerTest < Minitest::Test
     assert File.symlink?(File.join(@base_dir, 'file1'))
     assert File.symlink?(File.join(@base_dir, 'file2'))
 
-    assert File.exist?(temp_hankfile_path)
-    refute File.exist?('Hankfile'), 'Hankfile should not be created in project root'
+    assert_path_exists temp_hankfile_path
+    refute_path_exists 'Hankfile', 'Hankfile should not be created in project root'
   end
 
   def test_remove_mapping
@@ -72,7 +72,7 @@ class SymlinkManagerTest < Minitest::Test
     assert_equal 1, @hankfile.mappings.size
     refute @hankfile.mappings.key?(File.join(@base_dir, 'file1'))
 
-    assert File.exist?(temp_hankfile_path)
-    refute File.exist?('Hankfile'), 'Hankfile should not be created in project root'
+    assert_path_exists temp_hankfile_path
+    refute_path_exists 'Hankfile', 'Hankfile should not be created in project root'
   end
 end

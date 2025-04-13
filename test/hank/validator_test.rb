@@ -21,6 +21,7 @@ class ValidatorTest < Minitest::Test
     @hankfile.add_mapping('/nonexistent/file', 'nonexistent-file')
 
     issues = @validator.validate
+
     assert_equal 1, issues.size
     assert_equal :missing, issues.first.type
     assert_equal '/nonexistent/file', issues.first.source_path
@@ -35,6 +36,7 @@ class ValidatorTest < Minitest::Test
     @hankfile.add_mapping(source_path, 'regular_file')
 
     issues = @validator.validate
+
     assert_equal 1, issues.size
     assert_equal :not_symlink, issues.first.type
     assert_equal source_path, issues.first.source_path
@@ -56,6 +58,7 @@ class ValidatorTest < Minitest::Test
     @hankfile.add_mapping(source_path, 'correct_target')
 
     issues = @validator.validate
+
     assert_equal 1, issues.size
     assert_equal :wrong_target, issues.first.type
     assert_equal source_path, issues.first.source_path
@@ -74,6 +77,7 @@ class ValidatorTest < Minitest::Test
     @hankfile.add_mapping(source_path, 'target')
 
     issues = @validator.validate
+
     assert_empty issues
   end
 end

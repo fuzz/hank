@@ -14,11 +14,11 @@ module Hank
       basename = "dot--#{basename[1..]}" if basename.start_with?('.')
 
       # Flatten directory structure
-      if pathname.dirname.to_s != '.'
+      if pathname.dirname.to_s == '.'
+        basename
+      else
         dirname = pathname.dirname.to_s.gsub(%r{^/}, '').gsub('/', '-')
         "#{dirname}-#{basename}"
-      else
-        basename
       end
     end
 

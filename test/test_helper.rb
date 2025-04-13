@@ -23,7 +23,7 @@ module HankTestHelpers
     # Set environment variable to use temp file
     @temp_dir = Dir.mktmpdir('hank_test')
     @temp_hankfile_path = File.join(@temp_dir, 'Hankfile')
-    @original_hankfile_env = ENV['HANKFILE']
+    @original_hankfile_env = ENV.fetch('HANKFILE', nil)
     ENV['HANKFILE'] = @temp_hankfile_path
   end
 

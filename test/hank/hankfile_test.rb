@@ -20,17 +20,20 @@ class HankfileTest < Minitest::Test
 
   def test_add_mapping
     @hankfile.add_mapping('/etc/hosts', 'etc-hosts')
+
     assert_equal({ '/etc/hosts' => 'etc-hosts' }, @hankfile.mappings)
   end
 
   def test_remove_mapping
     @hankfile.add_mapping('/etc/hosts', 'etc-hosts')
     @hankfile.remove_mapping('/etc/hosts')
+
     assert_empty @hankfile.mappings
   end
 
   def test_to_s
     @hankfile.add_mapping('/etc/hosts', 'etc-hosts')
+
     assert_match(/\[mappings\]/, @hankfile.to_s)
     assert_match(%r{/etc/hosts}, @hankfile.to_s)
     assert_match(/etc-hosts/, @hankfile.to_s)
@@ -44,6 +47,7 @@ class HankfileTest < Minitest::Test
     TOML
 
     hankfile = Hank::Hankfile.from_file(Pathname.new(@temp_file.path))
+
     assert_equal 2, hankfile.mappings.size
     assert_equal 'etc-hosts', hankfile.mappings['/etc/hosts']
     assert_equal 'dot--bashrc', hankfile.mappings['/home/user/.bashrc']
@@ -62,18 +66,19 @@ class HankfileTest < Minitest::Test
     refute @hankfile.mappings.key?('/etc/resolv.conf')
 
     # Check that the file was created in the temp directory
-    assert File.exist?(temp_hankfile_path)
-    refute File.exist?('Hankfile'), 'Hankfile should not be created in project root'
+    assert_path_exists temp_hankfile_path
+    refute_path_exists 'Hankfile', 'Hankfile should not be created in project root'
   end
 
   def test_save
     @hankfile.add_mapping('/etc/hosts', 'etc-hosts')
     @hankfile.save
 
-    assert File.exist?(temp_hankfile_path)
-    refute File.exist?('Hankfile'), 'Hankfile should not be created in project root'
+    assert_path_exists temp_hankfile_path
+    refute_path_exists 'Hankfile', 'Hankfile should not be created in project root'
 
     content = File.read(temp_hankfile_path)
+
     assert_match(/\[mappings\]/, content)
     assert_match(%r{/etc/hosts}, content)
   end

@@ -45,7 +45,10 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'minitest-reporters', '~> 1.5'
   spec.add_development_dependency 'rake', '~> 13.0'
   spec.add_development_dependency 'rubocop', '~> 1.36'
+  spec.add_development_dependency 'rubocop-minitest', '~> 0.38'
+  spec.add_development_dependency 'rubocop-rake', '~> 0.7'
   spec.add_development_dependency 'simplecov', '~> 0.21'
   spec.add_development_dependency 'sorbet', '~> 0.5'
   spec.add_development_dependency 'tapioca', '~> 0.16'
+  spec.metadata['rubygems_mfa_required'] = 'true'
 end
