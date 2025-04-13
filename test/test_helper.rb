@@ -26,7 +26,7 @@ module HankTestHelpers
     @original_hankfile_env = ENV['HANKFILE']
     ENV['HANKFILE'] = @temp_hankfile_path
   end
-  
+
   def teardown_hankfile_test
     # Restore original environment variable
     if @original_hankfile_env
@@ -34,7 +34,7 @@ module HankTestHelpers
     else
       ENV.delete('HANKFILE')
     end
-    
+
     # Clean up temp directory
     FileUtils.remove_entry @temp_dir if @temp_dir && Dir.exist?(@temp_dir)
   end

@@ -69,7 +69,7 @@ module Hank
     end
 
     sig { params(issue: Validator::Issue, symlink_manager: SymlinkManager, hankfile_path: T.nilable(String)).void }
-    def handle_issue(issue, symlink_manager, hankfile_path = nil)
+    def handle_issue(issue, symlink_manager, _hankfile_path = nil)
       source_path = issue.source_path
       target_path = issue.target_path
 
