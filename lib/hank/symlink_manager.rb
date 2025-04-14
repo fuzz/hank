@@ -23,13 +23,6 @@ module Hank
       @hankfile.save
     end
 
-    sig do
-      params(
-        source_path: String,
-        target_path: String,
-        force: T::Boolean
-      ).returns(T::Boolean)
-    end
     sig { params(source: Pathname, target: Pathname).void }
     def create_empty_target(source, target)
       if source.directory?

@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
 
   spec.summary = 'Symlink manager for easier file management and AI collaboration'
   spec.description = 'Hank manages symlinks between source paths and flattened pathnames within a git repository, ' \
-                   'making it easier to manage configuration files and collaborate with AI tools.'
+                     'making it easier to manage configuration files and collaborate with AI tools.'
   spec.homepage = 'https://github.com/fuzz/hank'
   spec.license = 'MIT'
   spec.required_ruby_version = '>= 2.7.0'

@@ -43,6 +43,12 @@ Metrics/BlockLength:
   Exclude:
     - 'lib/hank/file_selector.rb'
     - 'lib/hank/validator.rb'
+    - 'hank.gemspec'
+    - 'test/**/*'
+
+Minitest/MultipleAssertions:
+  Exclude:
+    - 'test/**/*'
 
 Style/Documentation:
   Exclude:
